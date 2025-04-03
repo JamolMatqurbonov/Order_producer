@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  kafka:
+    image: bitnami/kafka:latest
+    container_name: kafka_11
+    restart: always
+    ports:
+      - "29092:29092"
+      - "9092:9092"
+    volumes:
+      - kafka-data:/bitnami/kafka
+    environment:
+      KAFKA_ENABLE_KRAFT: "yes"
+      KAFKA_CFG_NODE_ID: 1
+      KAFKA_CFG_PROCESS_ROLES: "controller,broker"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,PLAINTEXT_EXTERNAL://0.0.0.0:29092,CONTROLLER://kafka:9093"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092,PLAINTEXT_EXTERNAL://192.168.1.100:29092"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,PLAINTEXT_EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_CFG_MESSAGE_MAX_BYTES: "200000000"
+      KAFKA_CFG_REPLICA_FETCH_MAX_BYTES: "200000000"
+      KAFKA_CFG_SOCKET_REQUEST_MAX_BYTES: "200000000"
+      KAFKA_CFG_NUM_PARTITIONS: "3"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    networks:
+      - base-network
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-ui
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: "cluster1"
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: "kafka:9092"
+    depends_on:
+      - kafka
+    networks:
+      - base-network
+
+networks:
+  base-network:
+    driver: bridge
+
+volumes:
+  kafka-data:
+    driver: local
